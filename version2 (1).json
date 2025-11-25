@@ -1,0 +1,664 @@
+{
+  "name": "version2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        160
+      ],
+      "id": "21bccca6-aa27-4415-83e5-24a618822b26",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://towardsdatascience.com/feed",
+        "options": {
+          "customFields": ""
+        }
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5d2c3932-2883-4ad8-a1cd-63e0cbb1d9ff",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert LinkedIn content creator specializing in AI, Machine Learning, Automation, and Data Science.\nYour signature style: provocative framing, authentic industry analysis, and translating complex technology into high-level business or societal impact and the post should look like human generated and viral and should be interactive very much.\nYou aim for viral engagement and turn technical updates into thought-provoking stories.\n\nYou will receive a JSON array of RSS articles as input. Each article includes:\n\n\"title\": The article’s title\n\n\"link\": The article’s link\n\n\"contentSnippet\": A short summary\n\nTask Instructions\n\nAnalyze & Select:\nReview all articles. Pick ONE article with the highest potential impact for AI/ML professionals—ideally a paradigm shift, contrarian view, or idea that could spark debate, influence strategy, or redefine workflows.\n\nDeconstruct & Reframe:\nUse the chosen article’s core insight to discuss its broader implications for the AI industry, such as:\n\nJob roles and responsibilities\n\nCloud infrastructure and costs\n\nDecentralization or edge AI\n\nGovernance, ethical risks, or safety\n\nAI-human collaboration\n\nWrite the LinkedIn Post:\n\nLength: 150–220 words (excluding title)\n\nTone: Audacious, insightful, personal, thought-leadership style. Avoid generic marketing language.\n\nStructure:\n\nHook: Strong prediction or question in first paragraph\n\nAnalysis: 1–2 paragraphs explaining implications, insights, or challenges\n\nRhythm lines: 2–3 visually distinct, punchy lines (≤7 words each, max 3 emojis)\n\nClosing: 3–5 relevant hashtags\n\nStyle: Clear, scannable, engaging. Make complex ideas feel urgent, practical, and thought-provoking\n\nFormatting:\n\nTitle: Use Unicode bold characters (e.g., 𝐓𝐡𝐞 𝐧𝐞𝐱𝐭 𝐀𝐈 𝐫𝐞𝐯𝐨𝐥𝐮𝐭𝐢𝐨𝐧)\n\nPost body: Plain text only; do not use markdown, asterisks, underscores, or other symbols for bold/italics.\n\nRhythm lines can include up to 3 emojis naturally\n\nOutput Format (strict JSON):\n\n{\n  \"title\": \"<Unicode bold headline>\",\n  \"text\": \"<Full LinkedIn post body in plain text, 150–220 words, including rhythm lines, emojis, and hashtags>\"\n}\n\n\nEnsure JSON is valid (no trailing commas, no escape characters)\n### Input:\nBelow is your list of articles in valid JSON format:\n\n{{ JSON.stringify($json.data) }}\n\n\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert news analyst. Your task is to summarize the provided article into a single, concise paragraph (max 4 sentences). Do not include any introductory or concluding remarks"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1520,
+        160
+      ],
+      "id": "d6504569-3ad2-4250-a4ae-79a6b8c6edcb",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw text\nlet raw = $input.first().json.text;\n\n// Remove code block markers like ```json and ```\nraw = raw.replace(/```json|```/g, '').trim();\n\n// Parse the inner JSON safely\nlet data;\ntry {\n  data = JSON.parse(raw);\n} catch (e) {\n  data = { title: null, post: null, error: \"Invalid JSON from LLM\" };\n}\n\n\n// Return clean destructured output\nreturn [\n  {\n    json: {data\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        160
+      ],
+      "id": "c613a6b2-765b-42f6-9d4f-1b5d2cbc3edb",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "jkrishna@aziro.com",
+        "subject": "Linkedin post for today ",
+        "message": "=\nTitle :  {{ $json.data.title }}\n\nContent : {{ $json.data.text }}\n",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Approval ",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Approve"
+                  },
+                  {
+                    "option": "Reject"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reason for rejection"
+            }
+          ]
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 45,
+              "resumeUnit": "minutes"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2160,
+        160
+      ],
+      "id": "ae68f700-1542-421c-83c6-edfd3802c98b",
+      "name": "Send message and wait for response",
+      "webhookId": "ebe0ced3-3540-4aae-8ffe-3fa5b64d62d0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yIjB43SaVR5XKdu4",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "iizKB5qL9J",
+        "text": "={{ $('Code in JavaScript1').item.json.data.title }}\n\n{{ $('Code in JavaScript1').item.json.data.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        144
+      ],
+      "id": "d15a8d00-ddf5-46bf-9bf1-e997e7ce1693",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "hckBwSoZ6E3sfkyA",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data[\"Approval \"] }}",
+                    "rightValue": "=Approve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a31c9c4a-1883-401e-b4ec-c98b0b7ac320"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e045e03c-0310-48cf-ac04-c12e9e3f55ea",
+                    "leftValue": "={{ $json.data[\"Approval \"] }}",
+                    "rightValue": "Approve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        2352,
+        160
+      ],
+      "id": "edf538fd-71c0-42d2-a721-e1babd666fd9",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "include": "specifiedFields",
+        "fieldsToInclude": "title, link, contentSnippet",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        160
+      ],
+      "id": "8e72b082-01de-4b04-b4ab-6c9d7b84d459",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an influential LinkedIn content creator specializing in AI, Machine Learning, Automation, and Data Science. \nYour voice is bold, analytical, and conversational — known for turning technical updates into thought-provoking industry insights.\n\nYour task is to **revise or regenerate** a previously drafted LinkedIn post based on the provided feedback. \nApply the feedback *precisely* — if it’s minor, make minimal edits; if it’s major, reframe the post fully. \nPreserve your signature structure and rhythm (short paragraphs + 2–3 bullet-like emphasis lines using emojis or dashes).\n\n---\n\n### Revision Context\n\n1. **Rejection Reason (Critical)**  \n{{ $json.data[\"Reason for rejection\"] }}\n\n2. **Original Post Draft (Reference)**  \n{{ $('Basic LLM Chain').item.json.text }}\n\n3. **Input Articles (For Topical Context)**  \n{{ $('Aggregate').item.json.data.slice(0, 10).map((a, i) => `${a.title}\\n${a.link}\\n${a.contentSnippet}`).join('\\n\\n') }}\n\n---\n\n### Your Objective\n- Interpret the rejection reason carefully.  \n- Apply **only the necessary changes** to address it.  \n  - If feedback says “Change title,” only adjust the title.  \n  - If “Tone too dry,” improve rhythm and tone, keeping the structure intact.  \n  - If “Needs clarity,” simplify language but retain meaning.\n- Maintain the same core idea unless feedback demands a full reframe.\n\n---\n\n### Output Format (Strict JSON)\n{\n  \"title\": \"<Title in Unicode bold – always use this style>\",\n  \"text\": \"<Revised LinkedIn post body (150–220 words) with 3–5 short paragraphs, 2–3 bullet-style lines using emojis or dashes for rhythm, and ending with 3–5 relevant hashtags>\"\n}\n\n---\n\n### Style & Formatting Rules\n- **Title:** Always in Unicode bold (e.g., 𝐓𝐢𝐧𝐲 𝐌𝐨𝐝𝐞𝐥𝐬, 𝐌𝐚𝐬𝐬𝐢𝐯𝐞 𝐈𝐦𝐩𝐚𝐜𝐭).  \n- **Tone:** Thought-leadership style — confident, reflective, and human.  \n- **Structure:** \n  - Use double newlines (\\n\\n) between paragraphs.  \n  - Include 2–3 short rhythm lines (e.g.):\n    🔹 Smarter models, smaller footprints  \n    ⚡ Lower latency, higher trust  \n    💡 Real-world impact, not just benchmarks  \n- **Emojis:** Use naturally (1–3 total).  \n- **Hashtags:** End with 3–5 relevant hashtags.  \n- ❌ **Guardrails:** No markdown symbols, no links, no citations,no astrix,no underscore.\n\n---\n\nNow, intelligently revise the LinkedIn post according to the rejection feedback —  \nmaking minimal but high-impact edits when possible,  \nand ensuring the output matches your bullet-rhythm, bold-title thought-leadership style.\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert news analyst. Your task is to summarize the provided article into a single, concise paragraph (max 4 sentences). Do not include any introductory or concluding remarks"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        2576,
+        336
+      ],
+      "id": "1c72dc85-1a82-46cc-a648-a7c2803bc7c0",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "url": "https://www.kdnuggets.com/feed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        128
+      ],
+      "id": "39a0a80d-4dce-4909-8374-a4ba8b9cc634",
+      "name": "RSS Read1"
+    },
+    {
+      "parameters": {
+        "url": "https://blog.google/technology/ai/rss/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        256
+      ],
+      "id": "64504305-1b1a-4436-a896-ea9118d6374c",
+      "name": "RSS Read2"
+    },
+    {
+      "parameters": {
+        "url": "https://venturebeat.com/category/ai/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        384
+      ],
+      "id": "abfe8a74-5953-4518-9c87-74fafb2c2e9d",
+      "name": "RSS Read3"
+    },
+    {
+      "parameters": {
+        "url": "https://www.technologyreview.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        528
+      ],
+      "id": "31fe9c8d-2cbe-4c0b-b227-cd89f3ad7b45",
+      "name": "RSS Read4"
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        384,
+        112
+      ],
+      "id": "fc120774-2191-4cc0-ade2-deb4036562c2",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "522a35b0-d204-4a3b-b993-2609ff63f985",
+              "leftValue": "={{$json[\"title\"]}}",
+              "rightValue": "/(ai|artificial intelligence|machine learning|deep learning|data science|neural network|neural networks|nlp|natural language processing|computer vision|cv|genai|generative ai|transformer|gpt|bert|llm|agentic ai|autonomous agent|autonomous agents|openai|chatgpt|langchain|rpa|automation|predictive analytics|reinforcement learning|supervised learning|unsupervised learning|data analytics|data engineering|big data|mlops|model training|ai model)/i",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        160
+      ],
+      "id": "11872e54-9a50-4307-bbce-c76f9f4bb18e",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "isoDate",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        608,
+        160
+      ],
+      "id": "8ead9bd7-ac8e-4ea6-b8db-6b7bd71731e3",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        160
+      ],
+      "id": "4ca4eca2-6a4c-4c26-afe7-c364e7cc5bc7",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        368
+      ],
+      "id": "60eec21b-e62e-4284-8faf-15fbe8ad3e61",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nTnXBpgfcJfUuiFu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        384
+      ],
+      "id": "12d5ac76-dfcd-454e-bcd5-ad1d5ddca54f",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nTnXBpgfcJfUuiFu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "RSS Read3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "RSS Read4": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "19a0d904-2b03-40ce-884e-a5c874e63c7c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0672c81505e12ae65e243fcac54041827da9641d68d79597f418b331cd61f849"
+  },
+  "id": "O9ZtwE2CoVNOiXEp",
+  "tags": []
+}
